@@ -1,6 +1,6 @@
 {
   "name": "sshclient",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "sshclient =========",
   "main": "./lib",
   "scripts": {
