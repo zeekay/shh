@@ -1,0 +1,19 @@
+{
+  "name": "sshclient",
+  "version": "0.0.1",
+  "description": "sshclient =========",
+  "main": "lib",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://gh/zeekay/sshclient"
+  },
+  "author": "",
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "devDependencies": {
+    "coffee-script": "~1.4.0"
+  }
+}
