@@ -23,7 +23,7 @@ class SSHClient extends EventEmitter
     if other
       callback = callbacks.shift()
       if typeof callback == 'function'
-        callback trim buffer
+        callback null, trim buffer
       buffer = ''
     else
       other = not other
@@ -68,7 +68,7 @@ class SSHClient extends EventEmitter
   close: ->
     @ssh.kill 'SIGHUP'
 
-  exec: (cmd, callback) ->
+  cmd: (cmd, callback) ->
     @ssh.stdin.write "echo; echo #{COMMAND_START}; #{cmd}; echo #{COMMAND_END}\r\n"
     callbacks.push callback
 
