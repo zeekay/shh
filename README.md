@@ -8,7 +8,7 @@ simple ssh client library for node.js
         user: 'zeekay'
     });
 
-    ssh.exec('ls', function(out) {
+    ssh.cmd('ls', function(err, out) {
         console.log(out);
         ssh.close();
     });
