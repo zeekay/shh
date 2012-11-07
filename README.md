@@ -5,9 +5,10 @@ simple ssh client library for node.js
 
     var ssh = require('sshclient')({
         host: 'example.com',
-        user: 'zeekay',
+        user: 'zeekay'
     });
 
     ssh.exec('ls', function(out) {
         console.log(out);
+        ssh.close();
     });
