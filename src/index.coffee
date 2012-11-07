@@ -3,11 +3,11 @@
 
 class SSHClient extends EventEmitter
   COMMAND_START = '__SSH_COMMAND_START__'
-  COMMAND_END = '__SSH_COMMAND_END__'
+  COMMAND_END   = '__SSH_COMMAND_END__'
 
-  buffer = ''
+  buffer    = ''
   callbacks = []
-  other = false
+  other     = false
 
   trim = ->
     lines = buffer.split '\n'
@@ -62,6 +62,8 @@ class SSHClient extends EventEmitter
 
     @ssh.on 'exit', (code, signal) =>
       @emit 'exit'
+
+    @ssh.stdin.resume()
 
   close: ->
     @ssh.kill 'SIGHUP'
