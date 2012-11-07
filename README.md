@@ -1,14 +1,14 @@
-# sshclient
+# shh
 simple ssh client library for node.js
 
 ## Usage
 
-    var ssh = require('sshclient')({
+    var shh = require('shh')({
         host: 'example.com',
         user: 'zeekay'
     });
 
-    ssh.cmd('ls', function(err, out) {
+    shh.cmd('ls', function(err, out) {
         console.log(out);
-        ssh.close();
+        shh.close();
     });
