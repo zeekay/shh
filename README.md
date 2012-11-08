@@ -14,7 +14,7 @@ A simple ssh client library for node.js. Password authentication is not allowed,
         client.close();
     });
 
-You can also listen for `stdout` and `stderr` events, `shh` emits each line by line for you:
+You can also stream `stdout` and `stderr` line by line:
 
     client.on('stdout', function (line) {
         console.log(line);
