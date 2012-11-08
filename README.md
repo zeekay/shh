@@ -2,6 +2,7 @@
 A simple ssh client library for node.js.
 
 ## Usage
+Usage is simple:
 
     var shh = require('shh')({
         host: 'example.com',
