@@ -1,0 +1,39 @@
+child_process = require('child_process')
+os            = require('os')
+shh           = require('../../src')
+should        = require('chai').should()
+sinon         = require('sinon')
+
+client = null
+
+describe 'SSHClient', ->
+  describe '#parse', ->
+    before ->
+      sinon.stub child_process, 'spawn', ->
+        spawn =
+          stdout:
+            on: ->
+            setEncoding: ->
+          stderr:
+            on: ->
+            setEncoding: ->
+          stdin:
+            resume: ->
+          on: ->
+      client = shh
+        host: 'localhost'
+    
+    it 'should parse simple string', (done) ->
+      testValue = 'string of shit'
+      data = shh.COMMAND_START + os.EOL + testValue + os.EOL + shh.COMMAND_END
+
+      client.on 'stdout', (out) ->
+        out.should.contain testValue
+        done()
+
+      client.parse data
+
+    it 'should parse something else', (done) ->
+      done()
+
+      

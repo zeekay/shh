@@ -19,7 +19,15 @@ task 'test', 'run tests', ->
     --compilers coffee:coffee-script
     --reporter spec
     --colors
-    test"
+    test/integration test/unit"
+
+task 'unit-test', 'run unit tests', ->
+  run "NODE_ENV=test
+    ./node_modules/.bin/mocha
+    --compilers coffee:coffee-script
+    --reporter spec
+    --colors
+    test/unit"
 
 task 'publish', 'Publish current version to NPM', ->
   run './node_modules/.bin/coffee -bc -o lib/ src/', ->
