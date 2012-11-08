@@ -1,8 +1,13 @@
 {
   "name": "shh",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "A simple ssh client",
-  "keywords": ["ssh", "sshclient", "ssh-client", "client"],
+  "keywords": [
+    "ssh",
+    "sshclient",
+    "ssh-client",
+    "client"
+  ],
   "main": "./lib",
   "scripts": {
     "test": "cake test"
