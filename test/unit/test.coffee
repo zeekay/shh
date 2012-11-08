@@ -25,7 +25,7 @@ describe 'SSHClient', ->
     
     it 'should parse simple string', (done) ->
       testValue = 'string of shit'
-      data = shh.COMMAND_START + os.EOL + testValue + os.EOL + shh.COMMAND_END
+      data = shh.START_TOKEN + os.EOL + testValue + os.EOL + shh.END_TOKEN
 
       client.on 'stdout', (out) ->
         out.should.contain testValue
