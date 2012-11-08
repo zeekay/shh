@@ -2,12 +2,12 @@ shh    = require '../src'
 should = require('chai').should()
 
 describe 'Client', ->
-  describe '#cmd', ->
-    client = null
-    beforeEach ->
-      client = new shh.Client
-        host: 'localhost'
+  client = null
+  beforeEach ->
+    client = new shh.Client
+      host: 'localhost'
 
+  describe '#cmd', ->
     it 'should successfully call the callback with stdout', (done) ->
       client.cmd 'ls', (err, out) ->
         throw new Error err if err
@@ -29,3 +29,14 @@ describe 'Client', ->
             out.should.have.length.above 1
             client.close()
             done()
+
+  describe '#emit', ->
+    it 'should emit stdout', (done) ->
+      client.on 'stdout', (out) ->
+        out.should.be.a 'string'
+        out.should.have.length.above 1
+
+      client.cmd 'ls', (err, out) ->
+        throw new Error err if err
+        client.close()
+        done()
