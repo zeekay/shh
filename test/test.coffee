@@ -1,13 +1,31 @@
+shh    = require '../src'
 should = require('chai').should()
 
 describe 'SSHClient', ->
   describe '#cmd', ->
-    it 'should recieve stdout', (done) ->
-      shh = require('../src')
+    client = null
+    beforeEach ->
+      client = new shh.SSHClient
         host: 'localhost'
-      shh.cmd 'ls', (err, out) ->
+
+    it 'should successfully call the callback with stdout', (done) ->
+      client.cmd 'ls', (err, out) ->
         throw new Error err if err
         out.should.be.a 'string'
         out.should.have.length.above 1
-        shh.close()
+        client.close()
         done()
+
+    it 'should successfully call the callback with stdout, even with multiple nested calls', (done) ->
+      client.cmd 'ls', (err, out) ->
+        throw new Error err if err
+
+        client.cmd 'ls', (err, out) ->
+          throw new Error err if err
+
+          client.cmd 'ls', (err, out) ->
+            throw new Error err if err
+            out.should.be.a 'string'
+            out.should.have.length.above 1
+            client.close()
+            done()
