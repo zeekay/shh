@@ -149,5 +149,12 @@ class SSHClient extends events.EventEmitter
     @ssh.stdin.write "echo; echo #{COMMAND_START}; #{cmd}; echo #{COMMAND_END}\r\n"
     callbacks.push callback
 
-module.exports = (options) ->
+
+wrapper = (options) ->
   new SSHClient options
+  
+wrapper.SSHClient = SSHClient
+wrapper.COMMAND_START = COMMAND_START
+wrapper.COMMAND_END = COMMAND_END
+
+module.exports = wrapper
