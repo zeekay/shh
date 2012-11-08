@@ -126,6 +126,9 @@ class SSHClient extends events.EventEmitter
     # call any callbacks
     callback = callbacks.shift()
     if typeof callback == 'function'
+      if not stderr.trim()
+        stderr = null
+
       callback stderr, stdout
 
     # clear buffers
