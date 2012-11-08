@@ -2,15 +2,16 @@
   "name": "shh",
   "version": "0.1.8",
   "description": "A simple ssh client",
+  "keywords": ['ssh', 'sshclient', 'ssh-client', 'client'],
   "main": "./lib",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cake test"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/zeekay/shh"
   },
-  "author": "",
+  "author": "Zach Kelling <zeekayy@gmail.com> (http://whatit.is)",
   "license": "BSD",
   "readmeFilename": "README.md",
   "devDependencies": {

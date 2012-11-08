@@ -25,4 +25,3 @@ task 'publish', 'Publish current version to NPM', ->
   run './node_modules/.bin/coffee -bc -o lib/ src/', ->
     run 'git push', ->
       run 'npm publish'
-
