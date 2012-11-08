@@ -1,10 +1,11 @@
 # shh
-A simple ssh client library for node.js.
+A simple ssh client library for node.js. Password authentication is not allowed, so make sure you setup an identity file first.
 
 ## Usage
     var shh = require('shh')({
         host: 'example.com',
         user: 'zeekay'
+        identity: 'key.pem'
     });
 
     shh.cmd('ls', function (err, out) {
