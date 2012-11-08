@@ -4,7 +4,7 @@ A simple ssh client library for node.js. Password authentication is not allowed,
 ## Usage
     var shh = require('shh')({
         host: 'example.com',
-        user: 'zeekay'
+        user: 'zeekay',
         identity: 'key.pem'
     });
 
