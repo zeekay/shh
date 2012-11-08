@@ -87,9 +87,9 @@ class SSHClient extends events.EventEmitter
         # parse the remainder
         @parse lines.slice(startToken + 1).join os.EOL
       else
-        # we ignore everything until we find a start token
+        # we ignore everything until we find a start token,
+        # preserve last line in case it's truncated
         lastFragment = lines.pop()
-        return
     else
       # stream data until we find an end token
       endToken = lines.indexOf COMMAND_END
@@ -100,6 +100,7 @@ class SSHClient extends events.EventEmitter
         # continue to parse remainder
         @parse lines.slice endToken + 1
       else
+        # stream everything except last line which may be truncated
         lastFragment = lines.pop()
         @stream lines.join os.EOL
 
