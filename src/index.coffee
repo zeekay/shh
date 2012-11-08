@@ -2,9 +2,11 @@ child_process = require 'child_process'
 events        = require 'events'
 os            = require 'os'
 
-COMMAND_START = '__SSH_COMMAND_START__'
-COMMAND_END   = '__SSH_COMMAND_END__'
 BUFFER_LENGTH = 5000
+COLORS        = false
+END_TOKEN     = '__SHH_END_TOKEN__'
+START_TOKEN   = '__SHH_START_TOKEN__'
+TIMEOUT       = 10
 
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
@@ -17,9 +19,15 @@ class Client extends events.EventEmitter
   _streaming:    false
 
   constructor: (options = {}) ->
-    @bufferLength = options.bufferLength ? BUFFER_LENGTH
+    # The only option required is host
+    if not options.host
+      throw new Error 'No host specified'
 
-    @colors = options.colors ? false
+    @bufferLength = options.bufferLength ? BUFFER_LENGTH
+    @colors       = options.colors       ? COLORS
+    @endToken     = options.endToken     ? END_TOKEN
+    @startToken   = options.startToken   ? START_TOKEN
+    @timeout      = options.timeout      ? TIMEOUT
 
     # construct arguments for ssh
     args = [
@@ -28,6 +36,7 @@ class Client extends events.EventEmitter
       '-o', 'StrictHostKeyChecking=no'
       '-o', 'UserKnownHostsFile=/dev/null'
       '-o', 'ControlMaster=no'
+      '-o', 'ConnectTimeout=' + @timeout
     ]
 
     if options.port
@@ -91,8 +100,8 @@ class Client extends events.EventEmitter
 
     if not @_streaming
       # we need to find a start token first
-      start = lines.indexOf COMMAND_START
-      start = lines.indexOf COMMAND_START + '\r' if start == -1
+      start = lines.indexOf @startToken
+      start = lines.indexOf @startToken + '\r' if start == -1
 
       if start != -1
         # found a start token
@@ -105,8 +114,8 @@ class Client extends events.EventEmitter
         @_lastFragment = lines.pop()
     else
       # stream data until we find an end token
-      end = lines.indexOf COMMAND_END
-      end = lines.indexOf COMMAND_END + '\r' if end == -1
+      end = lines.indexOf @endToken
+      end = lines.indexOf @endToken + '\r' if end == -1
 
       if end != -1
         # we've found an end token
@@ -164,11 +173,14 @@ class Client extends events.EventEmitter
 
   cmd: (cmd, callback) ->
     @_callbacks.push callback
-    @ssh.stdin.write "echo; echo #{COMMAND_START}; #{cmd}; echo #{COMMAND_END}\r\n"
+    @ssh.stdin.write "echo; echo #{@startToken}; #{cmd}; echo #{@endToken}\r\n"
 
 module.exports = wrapper = (options) ->
   new Client options
 
 wrapper.Client        = Client
-wrapper.COMMAND_START = COMMAND_START
-wrapper.COMMAND_END   = COMMAND_END
+wrapper.BUFFER_LENGTH = BUFFER_LENGTH
+wrapper.COLORS        = COLORS
+wrapper.END_TOKEN     = END_TOKEN
+wrapper.START_TOKEN   = START_TOKEN
+wrapper.TIMEOUT       = TIMEOUT
