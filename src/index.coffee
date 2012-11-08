@@ -4,18 +4,21 @@ os            = require 'os'
 
 COMMAND_START = '__SSH_COMMAND_START__'
 COMMAND_END   = '__SSH_COMMAND_END__'
+BUFFER_LENGTH = 5000
 
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
 
 class SSHClient extends events.EventEmitter
-  stdout       = ''
-  stderr       = ''
-  lastFragment = null
-  callbacks    = []
-  streaming    = false
+  _stdout:       []
+  _stderr:       []
+  _lastFragment: null
+  _callbacks:    []
+  _streaming:    false
 
   constructor: (options = {}) ->
+    @bufferLength = options.bufferLength ? BUFFER_LENGTH
+
     @colors = options.colors ? false
 
     # construct arguments for ssh
@@ -56,7 +59,12 @@ class SSHClient extends events.EventEmitter
 
     # handle exit
     @ssh.on 'exit', (code, signal) =>
-      @emit 'exit'
+      @emit 'exit', code, signal
+
+      while @_callbacks.length
+        callback = @_callbacks.shift()
+        if typeof callback == 'function'
+          callback new Error 'SSH exited'
 
     # resume stdin so we can begin receiving data
     @ssh.stdin.resume()
@@ -64,21 +72,25 @@ class SSHClient extends events.EventEmitter
   # try to untruncate first line
   prependLastFragment: (lines) ->
     firstLine = lines.shift()
-    lines.unshift lastFragment + firstLine
-    lastFragment = null
+    lines.unshift @_lastFragment + firstLine
+    @_lastFragment = null
     lines
 
   parse: (data, type='stdout') ->
+    # split on newline, unless passed an Array
+    if typeof data == 'string'
+      lines = data.split os.EOL
+    else
+      lines = data
+
     return if not data?.split
     if type == 'stderr'
-      return @stream data, 'stderr' if streaming
+      return @stream lines, 'stderr' if @_streaming
 
-    lines = data.split os.EOL
-
-    if lastFragment
+    if @_lastFragment
       lines = @prependLastFragment lines
 
-    if not streaming
+    if not @_streaming
       # we need to find a start token first
       start = lines.indexOf COMMAND_START
       start = lines.indexOf COMMAND_START + '\r' if start == -1
@@ -87,11 +99,11 @@ class SSHClient extends events.EventEmitter
         # found a start token
         @start()
         # parse the remainder
-        @parse lines.slice(start + 1).join os.EOL
+        @parse lines.slice start + 1
       else
         # we ignore everything until we find a start token,
         # preserve last line in case it's truncated
-        lastFragment = lines.pop()
+        @_lastFragment = lines.pop()
     else
       # stream data until we find an end token
       end = lines.indexOf COMMAND_END
@@ -99,55 +111,59 @@ class SSHClient extends events.EventEmitter
 
       if end != -1
         # we've found an end token
-        @stream (lines.slice 0, end).join os.EOL
+        @stream  lines.slice 0, end
         @end()
         # continue to parse remainder
         @parse lines.slice end + 1
       else
         # stream everything except last line which may be truncated
-        lastFragment = lines.pop()
-        @stream lines.join os.EOL
+        @_lastFragment = lines.pop()
+        @stream lines
 
-  stream: (out, type='stdout') ->
-    if not @colors
-      out = stripColors out
+  # stream emits line by line, and saves it to a buffer
+  # for output when the command completes. The buffer is limited to @bufferLength
+  stream: (lines, type='stdout') ->
+    buffer = @['_' + type]
 
-    if type == 'stdout'
-      stdout += out
-      @emit 'stdout', out
-    else
-      stderr += out
-      @emit 'stderr', out
+    for line in lines
+      if not @colors
+        line = stripColors line
+        buffer.push line
+        buffer.shift() if buffer.length == @bufferLength
+        @emit type, line
+    return
 
   start: ->
     # flush output of lastFragment command
     @emit 'startcommand'
-    streaming = true
+    @_streaming = true
 
   end: ->
     # flush output of lastFragment command
+    stderr = @_stderr.join os.EOL
+    stdout = @_stdout.join os.EOL
     @emit 'endcommand', stderr, stdout
 
+    # clear buffers
+    @_stderr = []
+    @_stdout = []
+
+    # end streaming
+    @_streaming = false
+
     # call any callbacks
-    callback = callbacks.shift()
+    callback = @_callbacks.shift()
     if typeof callback == 'function'
       if not stderr.trim()
         stderr = null
-
       callback stderr, stdout
-
-    # clear buffers
-    stderr = stdout = ''
-
-    # end streaming
-    streaming = false
 
   close: ->
     @ssh.kill 'SIGHUP'
 
   cmd: (cmd, callback) ->
+    @_callbacks.push callback
     @ssh.stdin.write "echo; echo #{COMMAND_START}; #{cmd}; echo #{COMMAND_END}\r\n"
-    callbacks.push callback
 
 module.exports = (options) ->
   new SSHClient options
