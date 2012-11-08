@@ -1,11 +1,11 @@
 shh    = require '../src'
 should = require('chai').should()
 
-describe 'SSHClient', ->
+describe 'Client', ->
   describe '#cmd', ->
     client = null
     beforeEach ->
-      client = new shh.SSHClient
+      client = new shh.Client
         host: 'localhost'
 
     it 'should successfully call the callback with stdout', (done) ->

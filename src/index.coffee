@@ -9,7 +9,7 @@ BUFFER_LENGTH = 5000
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
 
-class SSHClient extends events.EventEmitter
+class Client extends events.EventEmitter
   _stdout:       []
   _stderr:       []
   _lastFragment: null
@@ -166,8 +166,8 @@ class SSHClient extends events.EventEmitter
     @ssh.stdin.write "echo; echo #{COMMAND_START}; #{cmd}; echo #{COMMAND_END}\r\n"
 
 module.exports = wrapper = (options) ->
-  new SSHClient options
+  new Client options
 
-wrapper.SSHClient     = SSHClient
+wrapper.Client        = Client
 wrapper.COMMAND_START = COMMAND_START
 wrapper.COMMAND_END   = COMMAND_END
