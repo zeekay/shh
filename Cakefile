@@ -21,7 +21,15 @@ task 'test', 'run tests', ->
     --colors
     test/integration test/unit"
 
-task 'unit-test', 'run unit tests', ->
+task 'test:integration', 'run unit tests', ->
+  run "NODE_ENV=test
+    ./node_modules/.bin/mocha
+    --compilers coffee:coffee-script
+    --reporter spec
+    --colors
+    test/unit"
+
+task 'test:unit', 'run unit tests', ->
   run "NODE_ENV=test
     ./node_modules/.bin/mocha
     --compilers coffee:coffee-script
