@@ -17,6 +17,7 @@ client.cmd('ls', function (err, out) {
 ```
 
 You can also stream `stdout` and `stderr` line by line:
+
 ```javascript
 client.on('stdout', function (line) {
     console.log(line);
