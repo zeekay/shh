@@ -83,7 +83,6 @@ class Client extends events.EventEmitter
     else
       lines = data
 
-    return if not data?.split
     if type == 'stderr'
       return @stream lines, 'stderr' if @_streaming
 
@@ -119,6 +118,8 @@ class Client extends events.EventEmitter
         # stream everything except last line which may be truncated
         @_lastFragment = lines.pop()
         @stream lines
+
+    return
 
   # stream emits line by line, and saves it to a buffer
   # for output when the command completes. The buffer is limited to @bufferLength
