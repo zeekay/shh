@@ -16,7 +16,7 @@ class SSHClient extends events.EventEmitter
   streaming    = false
 
   constructor: (options = {}) ->
-    @stripColors = options.stripColors ? true
+    @colors = options.colors ? false
 
     # construct arguments for ssh
     args = [
@@ -104,7 +104,7 @@ class SSHClient extends events.EventEmitter
         @stream lines.join os.EOL
 
   stream: (out, type='stdout') ->
-    if @stripColors
+    if not @colors
       out = stripColors out
 
     if type == 'stdout'
