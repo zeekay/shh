@@ -80,25 +80,29 @@ class SSHClient extends events.EventEmitter
 
     if not streaming
       # we need to find a start token first
-      startToken = lines.indexOf COMMAND_START
-      if startToken != -1
+      start = lines.indexOf COMMAND_START
+      start = lines.indexOf COMMAND_START + '\r' if start == -1
+
+      if start != -1
         # found a start token
         @start()
         # parse the remainder
-        @parse lines.slice(startToken + 1).join os.EOL
+        @parse lines.slice(start + 1).join os.EOL
       else
         # we ignore everything until we find a start token,
         # preserve last line in case it's truncated
         lastFragment = lines.pop()
     else
       # stream data until we find an end token
-      endToken = lines.indexOf COMMAND_END
-      if endToken != -1
+      end = lines.indexOf COMMAND_END
+      end = lines.indexOf COMMAND_END + '\r' if end == -1
+
+      if end != -1
         # we've found an end token
-        @stream (lines.slice 0, endToken).join os.EOL
+        @stream (lines.slice 0, end).join os.EOL
         @end()
         # continue to parse remainder
-        @parse lines.slice endToken + 1
+        @parse lines.slice end + 1
       else
         # stream everything except last line which may be truncated
         lastFragment = lines.pop()
