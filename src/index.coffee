@@ -2,6 +2,13 @@ Connection = require 'ssh2'
 events     = require 'events'
 os         = require 'os'
 
+BUFFER_LENGTH = 5000
+END_TOKEN     = '__SHH_END_TOKEN__'
+START_TOKEN   = '__SHH_START_TOKEN__'
+USERNAME      = process.env['USER']
+PRIVATE_KEY   = process.env['HOME'] + '/.ssh/id_rsa'
+PUBLIC_KEY    = process.env['HOME'] + '/.ssh/id_rsa.pub'
+
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
 
@@ -9,9 +16,7 @@ class Client extends events.EventEmitter
   constructor: (options = {}) ->
     options.host       ?= 'localhost'
     options.port       ?= 22
-    options.username   ?= process.env['USER']
-    options.privateKey ?= require('fs').readFileSync process.env['HOME'] + '/.ssh/id_rsa'
-    options.publicKey  ?= require('fs').readFileSync process.env['HOME'] + '/.ssh/id_rsa.pub'
+    options.username   ?= USERNAME
 
     @options       = options
 
@@ -32,6 +37,7 @@ class Client extends events.EventEmitter
     @_ssh.on 'connect', =>
       if @debug
         console.log '[ssh :: connect]'
+
     @_ssh.on 'ready', =>
       if @debug
         console.log '[ssh :: ready]'
@@ -64,6 +70,9 @@ class Client extends events.EventEmitter
 
     @_ssh.on 'error', (err) ->
       throw err if err
+
+    @options.privateKey ?= require('fs').readFileSync PRIVATE_KEY
+    @options.publicKey  ?= require('fs').readFileSync PUBLIC_KEY
 
     @_ssh.connect @options
 
