@@ -7,12 +7,14 @@ var shh = require('shh');
 
 client = new shh.Client({
     host: 'example.com',
-    user: 'zeekay'
+    username: 'zeekay'
 });
 
-client.cmd('ls', function (err, out) {
-    console.log(out);
-    client.close();
+client.connect(function() {
+    client.exec('ls', function (err, out) {
+        console.log(out);
+        client.close();
+    });
 });
 ```
 

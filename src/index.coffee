@@ -12,51 +12,50 @@ class Client extends events.EventEmitter
     options.username   ?= process.env['USER']
     options.privateKey ?= require('fs').readFileSync process.env['HOME'] + '/.ssh/id_rsa'
     options.publicKey  ?= require('fs').readFileSync process.env['HOME'] + '/.ssh/id_rsa.pub'
-    options.colors     ?= false
-    options.debug      ?= false
-
-    @bufferLength  = options.bufferLength ? 5000
-    @endToken      = options.endToken ? '__SHH_END_TOKEN__'
-    @startToken    = options.startToken ? '__SHH_START_TOKEN__'
 
     @options       = options
 
-    @_ssh          = new Connection()
+    @bufferLength  = options.bufferLength ? 5000
+    @colors        = options.colors ? false
+    @debug         = options.debug ? false
+    @endToken      = options.endToken ? '__SHH_END_TOKEN__'
+    @startToken    = options.startToken ? '__SHH_START_TOKEN__'
 
+    @_ssh          = new Connection()
     @_stderr       = []
-    @_stdout       =      []
+    @_stdout       = []
     @_callbacks    = []
     @_lastFragment = null
     @_streaming    = false
 
   connect: (callback = ->) ->
     @_ssh.on 'connect', =>
-      if @options.debug
+      if @debug
         console.log '[ssh :: connect]'
     @_ssh.on 'ready', =>
-      if @options.debug
+      if @debug
         console.log '[ssh :: ready]'
 
       @_ssh.shell {}, (err, stream) =>
         throw err if err
 
         stream.on 'end', ->
-          if @options.debug
+          if @debug
             console.log '[stream :: end]'
 
         stream.on 'close', ->
-          if @options.debug
+          if @debug
             console.log '[stream :: close]'
 
         stream.on 'exit', (code, signal) ->
-          if @options.debug
+          if @debug
             console.log '[stream :: exit]', code, signal
 
         stream.on 'data', (data = '', extended) =>
-          unless @options.colors
+          unless @colors
             data = stripColors data.toString()
 
-          if @options.debug
+          if @debug
             console.log '[stream :: data]', data
 
           @parse data, extended
