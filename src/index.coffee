@@ -176,4 +176,10 @@ class Client extends events.EventEmitter
 module.exports = wrapper = (options) ->
   new Client options
 
-wrapper.Client = Client
+wrapper.Client        = Client
+wrapper.USERNAME      = USERNAME
+wrapper.PRIVATE_KEY   = PRIVATE_KEY
+wrapper.PUBLIC_KEY    = PUBLIC_KEY
+wrapper.BUFFER_LENGTH = BUFFER_LENGTH
+wrapper.END_TOKEN     = END_TOKEN
+wrapper.START_TOKEN   = START_TOKEN
