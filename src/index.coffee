@@ -1,82 +1,72 @@
-child_process = require 'child_process'
-events        = require 'events'
-os            = require 'os'
-
-BUFFER_LENGTH = 5000
-COLORS        = false
-END_TOKEN     = '__SHH_END_TOKEN__'
-START_TOKEN   = '__SHH_START_TOKEN__'
-TIMEOUT       = 10
+Connection = require 'ssh2'
+events     = require 'events'
+os         = require 'os'
 
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
 
 class Client extends events.EventEmitter
-  _stdout:       []
-  _stderr:       []
-  _lastFragment: null
-  _callbacks:    []
-  _streaming:    false
-
   constructor: (options = {}) ->
-    # The only option required is host
-    if not options.host
-      throw new Error 'No host specified'
+    options.host       ?= 'localhost'
+    options.port       ?= 22
+    options.username   ?= process.env['USER']
+    options.privateKey ?= require('fs').readFileSync process.env['HOME'] + '/.ssh/id_rsa'
+    options.publicKey  ?= require('fs').readFileSync process.env['HOME'] + '/.ssh/id_rsa.pub'
+    options.colors     ?= false
+    options.debug      ?= false
 
-    @bufferLength = options.bufferLength ? BUFFER_LENGTH
-    @colors       = options.colors       ? COLORS
-    @endToken     = options.endToken     ? END_TOKEN
-    @startToken   = options.startToken   ? START_TOKEN
-    @timeout      = options.timeout      ? TIMEOUT
+    @bufferLength  = options.bufferLength ? 5000
+    @endToken      = options.endToken ? '__SHH_END_TOKEN__'
+    @startToken    = options.startToken ? '__SHH_START_TOKEN__'
 
-    # construct arguments for ssh
-    args = [
-      '-t', '-t'
-      '-o', 'PasswordAuthentication=no'
-      '-o', 'StrictHostKeyChecking=no'
-      '-o', 'UserKnownHostsFile=/dev/null'
-      '-o', 'ControlMaster=no'
-      '-o', 'ConnectTimeout=' + @timeout
-    ]
+    @options       = options
 
-    if options.port
-      args.push '-p'
-      args.push options.port
+    @_ssh          = new Connection()
 
-    if options.identity
-      args.push '-i'
-      args.push options.identity
+    @_stderr       = []
+    @_stdout       =      []
+    @_callbacks    = []
+    @_lastFragment = null
+    @_streaming    = false
 
-    if options.user
-      args.push "#{options.user}@#{options.host}"
-    else
-      args.push "#{options.host}"
+  connect: (callback = ->) ->
+    @_ssh.on 'connect', =>
+      if @options.debug
+        console.log '[ssh :: connect]'
+    @_ssh.on 'ready', =>
+      if @options.debug
+        console.log '[ssh :: ready]'
 
-    # span ssh process
-    @ssh = child_process.spawn 'ssh', args
+      @_ssh.shell {}, (err, stream) =>
+        throw err if err
 
-    # set encoding
-    @ssh.stderr.setEncoding 'utf8'
-    @ssh.stdout.setEncoding 'utf8'
+        stream.on 'end', ->
+          if @options.debug
+            console.log '[stream :: end]'
 
-    # handle data
-    @ssh.stderr.on 'data', (data) =>
-      @parse data, 'stderr'
+        stream.on 'close', ->
+          if @options.debug
+            console.log '[stream :: close]'
 
-    @ssh.stdout.on 'data', (data) =>
-      @parse data
+        stream.on 'exit', (code, signal) ->
+          if @options.debug
+            console.log '[stream :: exit]', code, signal
 
-    # handle exit
-    @ssh.on 'exit', (code, signal) =>
-      @emit 'exit', code, signal
+        stream.on 'data', (data = '', extended) =>
+          unless @options.colors
+            data = stripColors data.toString()
 
-      while @_callbacks.length
-        callback = @_callbacks.shift()
-        if typeof callback == 'function'
-          callback new Error 'SSH exited'
+          if @options.debug
+            console.log '[stream :: data]', data
 
-    # resume stdin so we can begin receiving data
-    @ssh.stdin.resume()
+          @parse data, extended
+
+        callback null, @_stream = stream
+
+    @_ssh.on 'error', (err) ->
+      throw err if err
+
+    @_ssh.connect @options
 
   # try to untruncate first line
   prependLastFragment: (lines) ->
@@ -169,18 +159,13 @@ class Client extends events.EventEmitter
       callback stderr, stdout
 
   close: ->
-    @ssh.kill 'SIGHUP'
+    @_ssh.end()
 
-  cmd: (cmd, callback) ->
+  exec: (cmd, callback) ->
     @_callbacks.push callback
-    @ssh.stdin.write "echo; echo #{@startToken}; #{cmd}; echo #{@endToken}\r\n"
+    @_stream.write "echo; echo #{@startToken}; #{cmd}; echo #{@endToken}\r\n"
 
 module.exports = wrapper = (options) ->
   new Client options
 
-wrapper.Client        = Client
-wrapper.BUFFER_LENGTH = BUFFER_LENGTH
-wrapper.COLORS        = COLORS
-wrapper.END_TOKEN     = END_TOKEN
-wrapper.START_TOKEN   = START_TOKEN
-wrapper.TIMEOUT       = TIMEOUT
+wrapper.Client = Client
