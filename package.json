@@ -3,14 +3,14 @@
   "version": "0.3.0",
   "description": "A simple ssh client",
   "keywords": [
+    "client",
     "ssh",
-    "sshclient",
     "ssh-client",
-    "client"
+    "sshclient"
   ],
   "main": "./lib",
   "scripts": {
-    "test": "cake test"
+    "test": "./node_modules/coffee-script/bin/cake test"
   },
   "repository": {
     "type": "git",
