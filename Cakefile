@@ -1,43 +1,44 @@
-{exec} = require 'child_process'
+exec = require 'executive'
 
-run = (cmd, callback) ->
-  exec cmd, (err, stderr, stdout) ->
-    if stderr
-      console.error stderr
-    if stdout
-      console.log stdout
+option '-g', '--grep [filter]', 'test filter'
 
-    if typeof callback == 'function'
-      callback err, stderr, stdout
+task 'clean', 'clean lib/', ->
+  exec 'rm -rf lib/'
 
-task 'build', 'Build project', ->
-  run './node_modules/.bin/coffee -bc -o lib/ src/'
+task 'build', 'compile src/*.coffee to lib/*.js', ->
+  exec './node_modules/.bin/coffee -bc -m -o lib/ src/'
 
-task 'test', 'run tests', ->
-  run "NODE_ENV=test
-    ./node_modules/.bin/mocha
-    --compilers coffee:coffee-script
-    --reporter spec
-    --colors
-    test/integration test/unit"
+task 'watch', 'watch for changes and recompile project', ->
+  exec './node_modules/.bin/coffee -bc -m -w -o lib/ src/'
 
-task 'test:integration', 'run integration tests', ->
-  run "NODE_ENV=test
-    ./node_modules/.bin/mocha
-    --compilers coffee:coffee-script
-    --reporter spec
-    --colors
-    test/integration"
+task 'test', 'run tests', (options) ->
+  tests = options.tests ? 'test/integration'
+  if options.grep?
+    grep = "--grep #{options.grep}"
+  else
+    grep = ''
 
-task 'test:unit', 'run unit tests', ->
-  run "NODE_ENV=test
-    ./node_modules/.bin/mocha
-    --compilers coffee:coffee-script
-    --reporter spec
-    --colors
-    test/unit"
+  exec "NODE_ENV=test node_modules/.bin/mocha
+        --colors
+        --compilers coffee:coffee-script
+        --recursive
+        --reporter spec
+        --require test/_helper.js
+        --timeout 15000
+        #{grep}
+        #{tests}"
 
-task 'publish', 'Publish current version to NPM', ->
-  run './node_modules/.bin/coffee -bc -o lib/ src/', ->
-    run 'git push', ->
-      run 'npm publish'
+task 'test:unit', 'run tests', (options) ->
+  options.tests = 'test/unit/'
+  invoke 'test'
+
+task 'test:integration', 'run integration tests', (options) ->
+  options.tests = 'test/integration/'
+  invoke 'test'
+
+task 'publish', 'Publish current version to npm', ->
+  exec [
+    'cake build'
+    'git push'
+    'npm publish'
+  ]

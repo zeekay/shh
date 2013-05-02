@@ -1,4 +1,4 @@
-shh    = require '../../src'
+shh    = require '../../lib'
 should = require('chai').should()
 
 describe 'Client [integration]', ->
