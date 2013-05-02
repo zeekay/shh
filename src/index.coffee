@@ -1,7 +1,7 @@
-Connection = require 'ssh2'
-events     = require 'events'
-fs         = require 'fs'
-os         = require 'os'
+Connection     = require 'ssh2'
+{EventEmitter} = require 'events'
+fs             = require 'fs'
+os             = require 'os'
 
 BUFFER_LENGTH = 5000
 END_TOKEN     = '__SHH_END_TOKEN__'
@@ -12,7 +12,7 @@ PRIVATE_KEY   = process.env['SHH_PRIVATE_KEY'] ? process.env['HOME'] + '/.ssh/id
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
 
-class Client extends events.EventEmitter
+class Client extends EventEmitter
   constructor: (options = {}) ->
     options.host       ?= 'localhost'
     options.port       ?= 22
@@ -43,24 +43,22 @@ class Client extends events.EventEmitter
       if @debug
         console.log '[ssh :: ready]'
 
-      @_connection.shell {}, (err, stream) =>
-        throw err if err
+      @_connection.shell (err, @_stream) =>
+        throw err if err?
 
-        @_stream = stream
-
-        stream.on 'end', ->
+        @_stream.on 'end', ->
           if @debug
             console.log '[stream :: end]'
 
-        stream.on 'close', ->
+        @_stream.on 'close', ->
           if @debug
             console.log '[stream :: close]'
 
-        stream.on 'exit', (code, signal) ->
+        @_stream.on 'exit', (code, signal) ->
           if @debug
             console.log '[stream :: exit]', code, signal
 
-        stream.on 'data', (data = '', extended) =>
+        @_stream.on 'data', (data = '', extended) =>
           unless @colors
             data = stripColors data.toString()
 
@@ -69,10 +67,14 @@ class Client extends events.EventEmitter
 
           @parse data, extended
 
-        callback null, @_stream = stream
+        callback null, @_stream
 
     @_connection.on 'error', (err) ->
-      throw err if err
+      throw err if err?
+
+    @_connection.on 'close', (hadError) ->
+      if hadError
+        throw new Error('Connection closed unexpectedly')
 
     # read private key and connect
     fs.exists @options.privateKey, (exists) =>
@@ -125,7 +127,7 @@ class Client extends events.EventEmitter
 
       if end != -1
         # we've found an end token
-        @stream  lines.slice 0, end
+        @stream lines.slice 0, end
         @end()
         # continue to parse remainder
         @parse lines.slice end + 1
