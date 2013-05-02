@@ -3,13 +3,11 @@ events     = require 'events'
 fs         = require 'fs'
 os         = require 'os'
 
-
 BUFFER_LENGTH = 5000
 END_TOKEN     = '__SHH_END_TOKEN__'
 START_TOKEN   = '__SHH_START_TOKEN__'
 USERNAME      = process.env['USER']
 PRIVATE_KEY   = process.env['SHH_PRIVATE_KEY'] ? process.env['HOME'] + '/.ssh/id_rsa'
-PUBLIC_KEY    = process.env['SHH_PUBLIC_KEY'] ? process.env['HOME'] + '/.ssh/id_rsa.pub'
 
 stripColors = (str) ->
   str.replace /\033\[[0-9;]*m/g, ''
@@ -19,6 +17,7 @@ class Client extends events.EventEmitter
     options.host       ?= 'localhost'
     options.port       ?= 22
     options.username   ?= USERNAME
+    options.privateKey ?= PRIVATE_KEY
 
     @options       = options
 
@@ -28,7 +27,7 @@ class Client extends events.EventEmitter
     @endToken      = options.endToken ? '__SHH_END_TOKEN__'
     @startToken    = options.startToken ? '__SHH_START_TOKEN__'
 
-    @_ssh          = new Connection()
+    @_connection   = new Connection()
     @_stderr       = []
     @_stdout       = []
     @_callbacks    = []
@@ -36,15 +35,15 @@ class Client extends events.EventEmitter
     @_streaming    = false
 
   connect: (callback = ->) ->
-    @_ssh.on 'connect', =>
+    @_connection.on 'connect', =>
       if @debug
         console.log '[ssh :: connect]'
 
-    @_ssh.on 'ready', =>
+    @_connection.on 'ready', =>
       if @debug
         console.log '[ssh :: ready]'
 
-      @_ssh.shell {}, (err, stream) =>
+      @_connection.shell {}, (err, stream) =>
         throw err if err
 
         @_stream = stream
@@ -72,29 +71,18 @@ class Client extends events.EventEmitter
 
         callback null, @_stream = stream
 
-    @_ssh.on 'error', (err) ->
+    @_connection.on 'error', (err) ->
       throw err if err
 
-    @options.privateKey ?= PRIVATE_KEY
-    @options.publicKey  ?= PUBLIC_KEY
+    # read private key and connect
+    fs.exists @options.privateKey, (exists) =>
+      throw new Error('Private key not found') if not exists
 
-    # Try to read private/public keys, then connect
-    complete = 0
-    done = ->
-      if complete == 2
-        @_ssh.connect @options
+      fs.readFile @options.privateKey, (err, data) =>
+        throw err if err?
 
-    readKey = (key) ->
-      complete++
-      fs.exists @options[key], (exists) =>
-        return done() if not exists
-        fs.readFile @options[key], (err, data) =>
-          throw err if err
-          @options[key] = data
-          done()
-
-    readKey 'privateKey'
-    readKey 'publicKey'
+        @options.privateKey = data
+        @_connection.connect @options
 
   # try to untruncate first line
   prependLastFragment: (lines) ->
@@ -187,7 +175,7 @@ class Client extends events.EventEmitter
       callback stderr, stdout
 
   close: ->
-    @_ssh.end()
+    @_connection.end()
 
   exec: (cmd, callback) ->
     @_callbacks.push callback
@@ -199,7 +187,6 @@ module.exports = wrapper = (options) ->
 wrapper.Client        = Client
 wrapper.USERNAME      = USERNAME
 wrapper.PRIVATE_KEY   = PRIVATE_KEY
-wrapper.PUBLIC_KEY    = PUBLIC_KEY
 wrapper.BUFFER_LENGTH = BUFFER_LENGTH
 wrapper.END_TOKEN     = END_TOKEN
 wrapper.START_TOKEN   = START_TOKEN
