@@ -1,6 +1,6 @@
 {
   "name": "shh",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Quiet the ssh client.",
   "keywords": [
     "client",
