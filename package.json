@@ -1,7 +1,7 @@
 {
   "name": "shh",
   "version": "0.3.2",
-  "description": "A simple ssh client",
+  "description": "Quiet the ssh client.",
   "keywords": [
     "client",
     "ssh",
@@ -16,7 +16,11 @@
     "type": "git",
     "url": "https://github.com/zeekay/shh"
   },
-  "author": "Zach Kelling <zeekayy@gmail.com> (http://whatit.is)",
+  "homepage": "http://github.com/zeekay/shh",
+  "author": "Zach Kelling <zk@monoid.io> (http://whatit.is)",
+  "bugs": {
+    "url": "http://github.com/zeekay/shh/issues"
+  },
   "license": "BSD",
   "readmeFilename": "README.md",
   "dependencies": {
