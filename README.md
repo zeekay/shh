@@ -1,4 +1,4 @@
-# shh
+# shh [![Build Status](https://travis-ci.org/zeekay/shh.svg?branch=master)](https://travis-ci.org/zeekay/shh)
 A simple ssh client library for node.js. Password authentication is not allowed, so make sure you setup an identity file first.
 
 ## Usage
