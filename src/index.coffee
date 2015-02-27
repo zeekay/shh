@@ -10,7 +10,7 @@ USERNAME      = process.env['USER']
 PRIVATE_KEY   = process.env['SHH_PRIVATE_KEY'] ? process.env['HOME'] + '/.ssh/id_rsa'
 
 stripColors = (str) ->
-  str.replace /\033\[[0-9;]*m/g, ''
+  str.replace /\x33\[[0-9;]*m/g, ''
 
 class Client extends EventEmitter
   constructor: (options = {}) ->

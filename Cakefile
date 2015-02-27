@@ -1,30 +1,33 @@
 exec = require 'executive'
 
 option '-g', '--grep [filter]', 'test filter'
+option '-v', '--version [<newversion> | major | minor | patch | build]', 'new version'
 
 task 'clean', 'clean lib/', ->
   exec 'rm -rf lib/'
+  exec 'rm -rf .test'
 
 task 'build', 'compile src/*.coffee to lib/*.js', ->
-  exec './node_modules/.bin/coffee -bc -m -o lib/ src/'
+  exec 'node_modules/.bin/coffee -bcm -o lib/ src/'
+  exec 'node_modules/.bin/coffee -bcm -o .test/ test/'
 
 task 'watch', 'watch for changes and recompile project', ->
-  exec './node_modules/.bin/coffee -bc -m -w -o lib/ src/'
+  exec 'node_modules/.bin/coffee -bcmw -o lib/ src/'
+  exec 'node_modules/.bin/coffee -bcmw -o .test test/'
 
 task 'test', 'run tests', (options) ->
-  tests = options.tests ? 'test/integration'
+  tests = options.tests ? 'test/unit test/integration'
   if options.grep?
     grep = "--grep #{options.grep}"
   else
     grep = ''
 
   exec "NODE_ENV=test node_modules/.bin/mocha
-        --colors
-        --compilers coffee:coffee-script
-        --recursive
-        --reporter spec
-        --require test/_helper.js
-        --timeout 15000
+      --colors
+      --reporter spec
+      --timeout 5000
+      --compilers coffee:coffee-script/register
+      --require postmortem/register
         #{grep}
         #{tests}"
 
@@ -36,9 +39,11 @@ task 'test:integration', 'run integration tests', (options) ->
   options.tests = 'test/integration/'
   invoke 'test'
 
-task 'publish', 'Publish current version to npm', ->
-  exec [
-    'cake build'
-    'git push'
-    'npm publish'
-  ]
+task 'publish', 'publish project', (options) ->
+  newVersion = options.version ? 'patch'
+
+  exec """
+  git push
+  npm version #{newVersion}
+  npm publish
+  """.split '\n'
