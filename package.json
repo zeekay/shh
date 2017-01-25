@@ -25,15 +25,15 @@
   "license": "BSD",
   "readmeFilename": "README.md",
   "dependencies": {
-    "scp2": "^0.2.1",
-    "ssh2": "^0.4.4"
+    "scp2": "^0.5.0",
+    "ssh2": "^0.5.4"
   },
   "devDependencies": {
-    "chai": "^2.1.0",
+    "chai": "^3.5.0",
     "coffee-script": "^1.9.1",
-    "executive": "^0.4.7",
-    "mocha": "^2.1.0",
-    "postmortem": "^0.1.8",
+    "executive": "^1.1.8",
+    "mocha": "^3.2.0",
+    "postmortem": "^0.2.4",
     "sinon": "^1.12.2"
   }
 }
